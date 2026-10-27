@@ -45,6 +45,21 @@ on:
         required: false
         type: boolean
         default: false
+      dev:
+        description: 'Dev card: SSH via ssh_pubkey, dev package set. Refused together with publish.'
+        required: false
+        type: boolean
+        default: false
+      ssh_pubkey:
+        description: 'root authorized_keys line for a dev card'
+        required: false
+        type: string
+        default: ''
+      debug:
+        description: 'NOVADECK_DEBUG: persistent journald, no rate limit'
+        required: false
+        type: boolean
+        default: false
   push:
     tags:
       - 'card/v*'
@@ -67,9 +82,15 @@ jobs:
         env:
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_PUBLISH: ${{ inputs.publish }}
+          INPUT_DEV: ${{ inputs.dev }}
+          INPUT_SSH_PUBKEY: ${{ inputs.ssh_pubkey }}
           REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
+          if [ "${INPUT_DEV:-false}" = true ]; then
+            [ "${INPUT_PUBLISH:-false}" = true ] && { echo "::error::a dev card carries an SSH key and is never published"; exit 1; }
+            [ -n "${INPUT_SSH_PUBKEY:-}" ] || { echo "::error::a dev card needs ssh_pubkey"; exit 1; }
+          fi
           if [ -n "${INPUT_VERSION:-}" ]; then
             v="$INPUT_VERSION"
           elif [ "$GITHUB_REF_TYPE" = tag ]; then
@@ -127,6 +148,9 @@ jobs:
     with:
       artifact: sdcard
       version: ${{ needs.prep.outputs.version }}
+      dev: ${{ inputs.dev == true }}
+      ssh_pubkey: ${{ inputs.ssh_pubkey }}
+      debug: ${{ inputs.debug == true }}
 
   # The upload half, split out of the build 2026-08-11. Three things came with the split, in order of
   # how much they matter:

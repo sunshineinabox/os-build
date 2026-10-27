@@ -90,6 +90,21 @@ on:
         required: false
         type: string
         default: ''
+      dev:
+        description: 'Build a dev card (NOVADECK_DEV=1, slot B empty). Never publish one.'
+        required: false
+        type: boolean
+        default: false
+      ssh_pubkey:
+        description: 'root authorized_keys line baked into a dev card'
+        required: false
+        type: string
+        default: ''
+      debug:
+        description: 'NOVADECK_DEBUG=1: persistent journald, no rate limit'
+        required: false
+        type: boolean
+        default: false
     secrets:
       # Only the bundle path needs these, and only when signing with the real release key. Absent,
       # genbundle.sh mints an ephemeral dev cert — fine for a smoke test, NOT a shippable update.
@@ -274,6 +289,10 @@ jobs:
       # release-sdcard.yml's publish job, from the same prep output that feeds this input.
       NOVADECK_VERSION: ${{ inputs.version }}
       ARTIFACT: ${{ inputs.artifact }}
+      NOVADECK_DEV: ${{ inputs.dev && '1' || '' }}
+      NOVADECK_SSH_PUBKEY: ${{ inputs.ssh_pubkey }}
+      NOVADECK_DEBUG: ${{ inputs.debug && '1' || '' }}
+      NOVADECK_SLOT_B: ${{ inputs.dev && '0' || '' }}
     steps:
       - uses: actions/checkout@v7
 
