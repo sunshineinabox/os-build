@@ -397,9 +397,10 @@ jobs:
         run: packages/build-overlay.sh --prune-retired
 
       # Saved HERE, not at job end, so a failure later in the card build does not throw the
-      # overlay away. Only on main (see above) and only when the exact key missed.
+      # overlay away. Only on main (see above) or a dev card (its branch-scoped cache never
+      # reaches main or a tag), and only when the exact key missed.
       - name: save the overlay repo
-        if: steps.overlay-cache.outputs.cache-hit != 'true' && github.ref == 'refs/heads/main'
+        if: steps.overlay-cache.outputs.cache-hit != 'true' && (github.ref == 'refs/heads/main' || inputs.dev)
         uses: actions/cache/save@v6
         with:
           path: work/repo/aarch64
